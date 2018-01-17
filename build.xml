@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="my project" basedir=".">
+    <property name="src" location="./src"/>
+    <property name="test" location="./test"/>
+    <property name="testlib" location="./lib"/>
+    <property name="testbuild" location="./testbuild"/>
+    <path id="classpath">
+        <pathelement location="./cobertura/cobertura-instrumented-classes" />
+        <!--<pathelement path="${bin}"/> Directory path of compiled classes(i.e *.class) -->
+        <pathelement location="./lib" />
+        <fileset dir="${testlib}">
+            <include name="**/*.jar"/>
+        </fileset>
+        <pathelement location="testbuild/classes"/>
+    </path>
+
+    <target name="init" depends="clean">
+        <tstamp/>
+        <mkdir dir="${testbuild}"/>
+    </target>
+    <target name="clean">
+            <delete dir="${testbuild}"/>
+            <delete dir="report"/>
+            <delete file="coverageDataFile" />
+               <delete dir="cobertura/cobertura-instrumented-classes" />
+    </target>
+    <target name="compile" depends="init">
+        <mkdir dir="${testbuild}/classes"/>
+        <javac srcdir="test" destdir="testbuild/classes" debug="true">
+                        <classpath>
+                            <path refid="classpath"/>
+                        </classpath>
+        </javac>
+    </target>
+    <target name="runtest" depends="compile,cb.instrument">
+        <taskdef classpathref="classpath" name="testng" classname="org.testng.TestNGAntTask" />
+        <testng classpathref="classpath" outputdir="report" haltonfailure="true" useDefaultListeners="false"
+            listeners="org.uncommons.reportng.HTMLReporter,org.uncommons.reportng.JUnitXMLReporter">
+            <!--
+            <fileset dir="." >
+                <include name="<names off your suite files here"/>
+            </fileset>
+            -->
+            <xmlfileset dir="./test" includes="testng.xml"/>
+            <sysproperty key="org.uncommons.reportng.title" value="Mobius Test Report"/>
+            <sysproperty key="net.sourceforge.cobertura.datafile" file="./coverageDataFile" />
+        </testng>
+    </target>
+
+    <target name="cb.init">
+       <!-- output directory -->
+       <property name="cb.report.dir" value="./cobertura" />
+       <!-- instrumentation directory -->
+       <property name="cb.instrument.dir" value="${cb.report.dir}/cobertura-instrumented-classes" />
+
+       <!-- your main java source files -->
+       <property name="cb.src.dir" value="./src" />
+       <!-- your main class files files -->
+       <property name="cb.classes.dir" value="./bin" />
+       <!-- your test class files -->
+       <property name="cb.test.classes.dir" value="./testbuild/classes" />
+
+       <taskdef classpathref="classpath" resource="tasks.properties" />
+    </target>
+     <!--
+    <target name="cb" depends="cb.gen, cb.xml, cb.html">
+       <delete file="coverageDataFile" />
+       <delete dir="${cb.instrument.dir}" />
+    </target>-->
+
+    <target name="cb.instrument" depends="cb.init">
+       <mkdir dir="${cb.report.dir}" />
+       <cobertura-instrument todir="${cb.instrument.dir}/"
+                             maxmemory="512M"
+                             datafile="coverageDataFile">
+          <fileset dir="${cb.classes.dir}">
+             <include name="**/*.class" />
+          </fileset>
+       </cobertura-instrument>
+    </target>
+
+    <target name="init.cb.path">
+       <!--<var name="test.cp" value="cb.test.cp" />
+       <var name="cb.sysarg" value="net.sourceforge.cobertura.datafile" />-->
+       <path id="cb.test.cp">
+          <pathelement path="${cb.instrument.dir}" />
+          <pathelement path="${cb.classes.dir}" />
+          <pathelement path="${cb.test.classes.dir}" />
+            <pathelement path="cb.test.cp"/>
+            <pathelement path="net.sourceforge.cobertura.datafile"/>
+          <!--<path refid="test.cp" /> -->
+              <path refid="classpath" />
+       </path>
+    </target>
+    <target name="cb.run" depends="init.cb.path" />
+    <target name="cb.gen" depends="cb.init, cb.instrument, cb.run" />
+    <target name="cb.html" depends="runtest">
+       <cobertura-report format="html"
+                         destdir="${cb.report.dir}"
+                         maxmemory="512M"
+                         datafile="coverageDataFile">
+          <fileset dir="${cb.src.dir}">
+             <include name="**/*.java" />
+          </fileset>
+       </cobertura-report>
+    </target>
+
+    <target name="cb.xml">
+       <cobertura-report format="xml"
+                         destdir="${cb.report.dir}"
+                         maxmemory="512M"
+                         datafile="coverageDataFile">
+          <fileset dir="${cb.src.dir}">
+             <include name="**/*.java" />
+          </fileset>
+       </cobertura-report>
+    </target>
+
+</project>

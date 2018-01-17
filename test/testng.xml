@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suite name="ITinvolve testing" verbose="1" >
+  <test name="Verify basic sention exist">
+    <classes>
+      <class name="com.example.simple.SimpleTest"/>
+    </classes>
+  </test>
+</suite>
